@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  users       User[]
+  createdAt   DateTime @default(now())
+}
+
+model Department {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  description String?
+  headUserId  String?
+  complaints  Complaint[]
+  users       User[]
+  createdAt   DateTime    @default(now())
+}
+
+model User {
+  id           String         @id @default(uuid())
+  name         String
+  email        String         @unique
+  passwordHash String
+  roleId       String
+  role         Role           @relation(fields: [roleId], references: [id])
+  departmentId String?
+  department   Department?    @relation(fields: [departmentId], references: [id])
+  complaints   Complaint[]    @relation("CreatedComplaints")
+  assignments  Assignment[]
+  comments     Comment[]
+  notifications Notification[]
+  auditLogs    AuditLog[]
+  createdAt    DateTime       @default(now())
+}
+
+model Complaint {
+  id           String       @id @default(uuid())
+  title        String
+  description  String
+  category     String
+  priority     String       @default("MEDIUM")
+  status       String       @default("SUBMITTED")
+  location     String?
+  createdById  String
+  createdBy    User         @relation("CreatedComplaints", fields: [createdById], references: [id])
+  departmentId String?
+  department   Department?  @relation(fields: [departmentId], references: [id])
+  dueAt        DateTime?
+  assignments  Assignment[]
+  comments     Comment[]
+  attachments  Attachment[]
+  notifications Notification[]
+  auditLogs    AuditLog[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Assignment {
+  id          String    @id @default(uuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id])
+  assignedTo  String
+  assignee    User      @relation(fields: [assignedTo], references: [id])
+  assignedBy  String
+  assignedAt  DateTime  @default(now())
+}
+
+model Comment {
+  id          String    @id @default(uuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id])
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  comment     String
+  createdAt   DateTime  @default(now())
+}
+
+model Attachment {
+  id          String    @id @default(uuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id])
+  s3Key       String
+  fileUrl     String
+  fileType    String
+  createdAt   DateTime  @default(now())
+}
+
+model Notification {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  complaintId String?
+  complaint   Complaint? @relation(fields: [complaintId], references: [id])
+  type        String
+  message     String
+  isRead      Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+}
+
+model AuditLog {
+  id          String    @id @default(uuid())
+  actorId     String
+  actor       User      @relation(fields: [actorId], references: [id])
+  complaintId String?
+  complaint   Complaint? @relation(fields: [complaintId], references: [id])
+  action      String
+  oldValue    String?
+  newValue    String?
+  createdAt   DateTime  @default(now())
+}
+
+model WorkflowTransition {
+  id          String @id @default(uuid())
+  fromStatus  String
+  toStatus    String
+  allowedRole String
+}
