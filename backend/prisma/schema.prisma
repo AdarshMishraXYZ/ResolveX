@@ -34,6 +34,7 @@ model User {
   role         Role           @relation(fields: [roleId], references: [id])
   departmentId String?
   department   Department?    @relation(fields: [departmentId], references: [id])
+  status       String         @default("ACTIVE")
   complaints   Complaint[]    @relation("CreatedComplaints")
   assignments  Assignment[]
   comments     Comment[]
