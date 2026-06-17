@@ -5,26 +5,24 @@ const { createNotification } = require('../../services/notificationService')
 
 const createComplaint = async (req, res) => {
   try {
-    const errors = validateComplaint(req.body)
-    if (errors.length > 0) return res.status(400).json({ errors })
+    const { title, description, location } = req.body
 
-    const { title, description, category, location, priority } = req.body
-    const routing = routeComplaint(category, description)
+    if (!title || title.trim() === '') return res.status(400).json({ errors: ['Title is required'] })
+    if (!description || description.trim() === '') return res.status(400).json({ errors: ['Description is required'] })
 
-    let department = null
-    if (routing.department) {
-      department = await prisma.department.findFirst({
-        where: { name: { contains: routing.department, mode: 'insensitive' } },
-      })
-    }
+    const routing = routeComplaint(description)
+
+    const department = await prisma.department.findFirst({
+      where: { name: { contains: routing.department, mode: 'insensitive' } },
+    })
 
     const complaint = await prisma.complaint.create({
       data: {
         title,
         description,
-        category,
+        category: routing.department,
         location,
-        priority: priority || routing.priority,
+        priority: routing.priority,
         createdById: req.user.id,
         departmentId: department?.id || null,
         dueAt: routing.dueAt,
@@ -37,7 +35,7 @@ const createComplaint = async (req, res) => {
         actorId: req.user.id,
         complaintId: complaint.id,
         action: 'CREATED',
-        newValue: 'SUBMITTED',
+        newValue: `SUBMITTED → routed to ${routing.department} (${routing.confidence}% confidence): ${routing.reasoning}`,
       },
     })
 
@@ -45,15 +43,14 @@ const createComplaint = async (req, res) => {
       userId: req.user.id,
       complaintId: complaint.id,
       type: 'COMPLAINT_CREATED',
-      message: `Your complaint "${title}" has been submitted successfully.`,
+      message: `Your complaint "${title}" was submitted and routed to ${routing.department}.`,
     })
 
-    res.status(201).json({ message: 'Complaint created', complaint })
+    res.status(201).json({ message: 'Complaint created', complaint, routing })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 }
-
 const getMyComplaints = async (req, res) => {
   try {
     const complaints = await prisma.complaint.findMany({
@@ -94,7 +91,6 @@ const getAllComplaints = async (req, res) => {
     res.status(500).json({ message: error.message })
   }
 }
-
 const getComplaintById = async (req, res) => {
   try {
     const complaint = await prisma.complaint.findUnique({
@@ -102,22 +98,61 @@ const getComplaintById = async (req, res) => {
       include: {
         department: true,
         createdBy: { select: { name: true, email: true } },
-        comments: { include: { user: { select: { name: true, role: true } } } },
+        comments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                role: { select: { name: true } }
+              }
+            }
+          },
+          orderBy: { createdAt: 'asc' }
+        },
         attachments: true,
-        auditLogs: { include: { actor: { select: { name: true } } }, orderBy: { createdAt: 'desc' } },
+        auditLogs: {
+          include: { actor: { select: { name: true } } },
+          orderBy: { createdAt: 'desc' }
+        },
         assignments: { include: { assignee: { select: { name: true } } } },
       },
     })
+
     if (!complaint) return res.status(404).json({ message: 'Complaint not found' })
+
+    const role = req.user.role.name
+    const isOwner = complaint.createdById === req.user.id
+    const isSameDepartment = complaint.departmentId === req.user.departmentId
+    const isPrivileged = role === 'ADMIN' || role === 'DEPARTMENT_HEAD'
+
+    if (role === 'CITIZEN' && !isOwner) {
+      return res.status(403).json({ message: 'You can only view your own complaints' })
+    }
+
+    if (role === 'STAFF' && !isSameDepartment) {
+      return res.status(403).json({ message: 'This complaint belongs to a different department' })
+    }
+
+    if (!isOwner && !isSameDepartment && !isPrivileged) {
+      return res.status(403).json({ message: 'You do not have access to this complaint' })
+    }
+
     res.json({ complaint })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 }
 
+
 const updateStatus = async (req, res) => {
   try {
-    const { status } = req.body
+    const { status, version } = req.body
+
+    if (version === undefined || version === null) {
+      return res.status(400).json({ message: 'version is required to update status' })
+    }
+
     const complaint = await prisma.complaint.findUnique({ where: { id: req.params.id } })
     if (!complaint) return res.status(404).json({ message: 'Complaint not found' })
 
@@ -128,10 +163,18 @@ const updateStatus = async (req, res) => {
       return res.status(403).json({ message: `Transition from ${complaint.status} to ${status} not allowed` })
     }
 
-    const updated = await prisma.complaint.update({
-      where: { id: req.params.id },
-      data: { status },
+    const result = await prisma.complaint.updateMany({
+      where: { id: req.params.id, version: parseInt(version) },
+      data: { status, version: { increment: 1 } },
     })
+
+    if (result.count === 0) {
+      return res.status(409).json({
+        message: 'This complaint was just updated by someone else. Please refresh and try again.',
+      })
+    }
+
+    const updated = await prisma.complaint.findUnique({ where: { id: req.params.id } })
 
     await prisma.auditLog.create({
       data: {
@@ -147,7 +190,7 @@ const updateStatus = async (req, res) => {
       userId: complaint.createdById,
       complaintId: complaint.id,
       type: 'STATUS_UPDATED',
-      message: `Your complaint status changed to ${status}.`,
+      message: `Your complaint "${complaint.title}" status changed to ${status.replace(/_/g, ' ')}.`,
     })
 
     if (global.io) {

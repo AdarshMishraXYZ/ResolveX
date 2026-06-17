@@ -49,6 +49,7 @@ model Complaint {
   category     String
   priority     String       @default("MEDIUM")
   status       String       @default("SUBMITTED")
+  version      Int          @default(0)
   location     String?
   createdById  String
   createdBy    User         @relation("CreatedComplaints", fields: [createdById], references: [id])
