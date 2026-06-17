@@ -126,10 +126,18 @@ const getPendingStaff = async (req, res) => {
   }
 }
 
+
 const approveStaff = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.params.id } })
-    if (user.status !== 'PENDING') return res.status(400).json({ message: 'User is not pending approval' })
+
+    if (user === null) {
+      return res.status(404).json({ message: 'User not found' })
+    }
+
+    if (user.status !== 'PENDING') {
+      return res.status(400).json({ message: 'User is not pending approval' })
+    }
 
     const updated = await prisma.user.update({
       where: { id: req.params.id },
@@ -137,7 +145,16 @@ const approveStaff = async (req, res) => {
       include: { role: true, department: true },
     })
 
-    res.json({ message: 'Staff account approved', user: { id: updated.id, name: updated.name, email: updated.email, role: updated.role.name, department: updated.department?.name } })
+    res.json({
+      message: 'Staff account approved',
+      user: {
+        id: updated.id,
+        name: updated.name,
+        email: updated.email,
+        role: updated.role.name,
+        department: updated.department?.name,
+      },
+    })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
