@@ -12,5 +12,8 @@ api.interceptors.request.use((config) => {
 export const registerUser = (data) => api.post('/auth/register', data)
 export const loginUser = (data) => api.post('/auth/login', data)
 export const getMe = () => api.get('/auth/me')
+export const getDepartments = () => api.get('/departments')
+export const getPendingStaff = () => api.get('/auth/pending-staff')
+export const approveStaff = (id) => api.patch('/auth/approve-staff/' + id)
 
 export default api

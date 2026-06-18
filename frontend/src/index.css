@@ -1,1 +1,13 @@
 @import "tailwindcss";
+:root {
+  --font-display: 'Fraunces', serif;
+  --font-body: 'Inter', sans-serif;
+  --color-ink: #1A1A18;
+  --color-paper: #FAFAF8;
+  --color-amber: #B8762E;
+  --color-slate: #5B6470;
+}
+
+body {
+  font-family: var(--font-body);
+}

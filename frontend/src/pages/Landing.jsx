@@ -1,149 +1,161 @@
 import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+
+const TIMELINE_STEPS = ['Submitted', 'Under review', 'Assigned', 'In progress', 'Resolved']
+
+const LiveTicket = () => {
+  const [activeStep, setActiveStep] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveStep((prev) => (prev + 1) % (TIMELINE_STEPS.length + 1))
+    }, 1800)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="bg-white border border-[#E3E0D8] rounded-lg p-8 shadow-sm max-w-md w-full">
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <p className="text-xs text-[#5B6470] uppercase tracking-wider mb-1">Ticket #4471</p>
+          <p className="font-medium text-[#1A1A18]">Streetlight not working, Block A</p>
+        </div>
+        <span className="text-xs font-medium px-2 py-1 rounded bg-[#B8762E]/10 text-[#B8762E]">
+          High priority
+        </span>
+      </div>
+
+      <div className="space-y-0">
+        {TIMELINE_STEPS.map((step, i) => {
+          const isDone = i < activeStep
+          const isCurrent = i === activeStep
+          return (
+            <div key={step} className="flex items-start gap-3">
+              <div className="flex flex-col items-center">
+                <div
+                  className={`w-2.5 h-2.5 rounded-full border transition-colors duration-500 ${
+                    isDone || isCurrent
+                      ? 'bg-[#B8762E] border-[#B8762E]'
+                      : 'bg-transparent border-[#C8C4B8]'
+                  }`}
+                />
+                {i < TIMELINE_STEPS.length - 1 && (
+                  <div
+                    className={`w-px h-8 transition-colors duration-500 ${
+                      isDone ? 'bg-[#B8762E]' : 'bg-[#E3E0D8]'
+                    }`}
+                  />
+                )}
+              </div>
+              <p
+                className={`text-sm pb-7 transition-colors duration-500 ${
+                  isCurrent ? 'text-[#1A1A18] font-medium' : isDone ? 'text-[#5B6470]' : 'text-[#A8A498]'
+                }`}
+              >
+                {step}
+              </p>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 const features = [
-  { icon: '🎯', title: 'Smart Auto-Routing', desc: 'Complaints are automatically routed to the right department using keyword intelligence.' },
-  { icon: '⚡', title: 'Real-Time Updates', desc: 'Instant notifications when your complaint status changes via Socket.IO.' },
-  { icon: '📊', title: 'Analytics Dashboard', desc: 'Department performance, SLA breach tracking, and complaint trends.' },
-  { icon: '🔐', title: 'Role-Based Access', desc: 'Citizen, Staff, Department Head, and Admin roles with fine-grained permissions.' },
-  { icon: '⏱️', title: 'SLA Enforcement', desc: 'Automatic escalation when deadlines are missed. No complaint falls through the cracks.' },
-  { icon: '📝', title: 'Full Audit Trail', desc: 'Every action is logged. Complete accountability and traceability.' },
-]
-
-const stats = [
-  { value: '6+', label: 'Departments' },
-  { value: '4', label: 'User Roles' },
-  { value: '10+', label: 'Workflow States' },
-  { value: '100%', label: 'Tracked' },
+  { title: 'Routing', desc: 'Reads the description, assigns a department, and explains why.' },
+  { title: 'Deadlines', desc: 'Every ticket gets an SLA. Missed deadlines escalate on their own.' },
+  { title: 'Accountability', desc: 'Every status change, comment, and reassignment is logged.' },
+  { title: 'Live tracking', desc: 'The person who filed it watches it move, in real time.' },
 ]
 
 const Landing = () => {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navbar */}
-      <nav className="flex items-center justify-between px-8 py-4 border-b border-gray-100 sticky top-0 bg-white z-50">
-        <span className="text-2xl font-bold text-blue-600">ResolveX</span>
-        <div className="flex gap-3">
-          <button
-            onClick={() => navigate('/login')}
-            className="px-5 py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition"
-          >
-            Login
-          </button>
-          <button
-            onClick={() => navigate('/register')}
-            className="px-5 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            Get Started
-          </button>
-        </div>
+    <div className="min-h-screen bg-[#FAFAF8] text-[#1A1A18]">
+      <nav className="flex items-center justify-between px-8 py-5 border-b border-[#E3E0D8]">
+        <span style={{ fontFamily: 'var(--font-display)' }} className="text-xl font-medium">
+          ResolveX
+        </span>
+        <button
+          onClick={() => navigate('/login')}
+          className="text-sm font-medium text-[#5B6470] hover:text-[#1A1A18] transition"
+        >
+          Sign in
+        </button>
       </nav>
 
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-blue-50 via-indigo-50 to-white px-8 py-24 text-center">
-        <div className="max-w-4xl mx-auto">
-          <span className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-4 py-1.5 rounded-full mb-6 uppercase tracking-wide">
-            Smart Public Service Platform
-          </span>
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            Complaints Resolved,<br />
-            <span className="text-blue-600">Not Just Recorded</span>
-          </h1>
-          <p className="text-xl text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed">
-            ResolveX automatically routes complaints to the right department, tracks every action, enforces SLA deadlines, and keeps citizens informed in real time.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <section className="px-8 py-20 md:py-28">
+        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-[#B8762E] mb-4 font-medium">
+              Complaint routing, with a paper trail
+            </p>
+            <h1
+              style={{ fontFamily: 'var(--font-display)' }}
+              className="text-4xl md:text-5xl leading-[1.15] mb-6"
+            >
+              Every complaint has an owner. You can prove it.
+            </h1>
+            <p className="text-[#5B6470] text-lg leading-relaxed mb-8 max-w-md">
+              File an issue and it's read, routed to the right department, and tracked
+              until someone closes it. No spreadsheet. No WhatsApp group.
+            </p>
             <button
               onClick={() => navigate('/register')}
-              className="bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-blue-700 transition shadow-lg shadow-blue-200"
+              className="bg-[#1A1A18] text-white px-6 py-3.5 rounded text-sm font-medium hover:bg-[#1A1A18]/90 transition"
             >
-              Submit a Complaint →
+              Report an issue
             </button>
-            <button
-              onClick={() => navigate('/login')}
-              className="border border-gray-300 text-gray-700 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-50 transition"
-            >
-              Staff Login
-            </button>
+          </div>
+
+          <div className="flex justify-center">
+            <LiveTicket />
           </div>
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="bg-blue-600 py-12 px-8">
-        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          {stats.map((s) => (
-            <div key={s.label}>
-              <p className="text-4xl font-bold text-white">{s.value}</p>
-              <p className="text-blue-200 text-sm mt-1">{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-24 px-8 bg-gray-50">
+      <section className="px-8 py-20 border-t border-[#E3E0D8]">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">Everything you need to manage complaints</h2>
-            <p className="text-gray-500 max-w-xl mx-auto">Built for colleges, government bodies, hospitals, and enterprises.</p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <h2
+            style={{ fontFamily: 'var(--font-display)' }}
+            className="text-2xl mb-12"
+          >
+            What actually happens after you file
+          </h2>
+          <div className="grid md:grid-cols-2 gap-x-12 gap-y-10">
             {features.map((f) => (
-              <div key={f.title} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
-                <span className="text-3xl mb-4 block">{f.icon}</span>
-                <h3 className="font-semibold text-gray-800 mb-2">{f.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{f.desc}</p>
+              <div key={f.title} className="border-l-2 border-[#B8762E] pl-5">
+                <h3 className="font-medium mb-1.5">{f.title}</h3>
+                <p className="text-[#5B6470] text-sm leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="py-24 px-8 bg-white">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">How ResolveX works</h2>
+      <section className="px-8 py-16 border-t border-[#E3E0D8]">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div>
+            <p style={{ fontFamily: 'var(--font-display)' }} className="text-xl mb-1">
+              Work here?
+            </p>
+            <p className="text-[#5B6470] text-sm">
+              Register as staff and your department's queue starts the moment an admin approves you.
+            </p>
           </div>
-          <div className="grid md:grid-cols-4 gap-6 text-center">
-            {[
-              { step: '01', title: 'Submit', desc: 'Citizen submits a complaint with description and location' },
-              { step: '02', title: 'Auto-Route', desc: 'Smart engine detects category and assigns to right department' },
-              { step: '03', title: 'Track', desc: 'Staff updates status through workflow stages with audit logs' },
-              { step: '04', title: 'Resolve', desc: 'Citizen gets notified in real time when issue is resolved' },
-            ].map((item) => (
-              <div key={item.step} className="relative">
-                <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center text-lg font-bold mx-auto mb-4">
-                  {item.step}
-                </div>
-                <h3 className="font-semibold text-gray-800 mb-2">{item.title}</h3>
-                <p className="text-gray-500 text-sm">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="bg-gradient-to-br from-blue-600 to-indigo-700 py-20 px-8 text-center">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold text-white mb-4">Ready to resolve complaints faster?</h2>
-          <p className="text-blue-200 mb-8">Join ResolveX and bring accountability to your public service workflow.</p>
           <button
             onClick={() => navigate('/register')}
-            className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-blue-50 transition"
+            className="border border-[#1A1A18] text-[#1A1A18] px-5 py-2.5 rounded text-sm font-medium hover:bg-[#1A1A18] hover:text-white transition whitespace-nowrap"
           >
-            Get Started Free →
+            Register as staff
           </button>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8 px-8 text-center text-sm">
-        <p className="text-white font-semibold text-lg mb-2">ResolveX</p>
-        <p>Smart Complaint Routing & Public Service Workflow System</p>
+      <footer className="px-8 py-8 border-t border-[#E3E0D8] text-center">
+        <p className="text-xs text-[#A8A498]">ResolveX — smart complaint routing and public service workflow</p>
       </footer>
     </div>
   )
