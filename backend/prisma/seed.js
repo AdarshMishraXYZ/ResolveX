@@ -29,6 +29,16 @@ async function main() {
     })
   }
 
+  console.log('Seeding skills...')
+  const skills = ['Electrician', 'Plumber', 'Carpenter', 'Painter', 'AC Technician', 'Mason', 'Cleaner', 'IT Technician', 'Gardener', 'Locksmith']
+  for (const name of skills) {
+    await prisma.skill.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    })
+  }
+
   console.log('Seeding admin user...')
   const adminRole = await prisma.role.findUnique({ where: { name: 'ADMIN' } })
   const passwordHash = await bcrypt.hash('admin123', 10)
