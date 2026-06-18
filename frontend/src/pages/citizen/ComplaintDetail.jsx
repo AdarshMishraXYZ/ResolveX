@@ -21,24 +21,21 @@ const WORKFLOW_STEPS = [
   { status: 'CLOSED', label: 'Closed', desc: 'Complaint closed successfully', icon: CheckCircle, color: 'gray' },
 ]
 
+
 const ALL_TRANSITIONS = {
   STAFF: {
-    SUBMITTED: ['UNDER_REVIEW'],
-    ASSIGNED: ['IN_PROGRESS'],
-    IN_PROGRESS: ['VERIFICATION'],
+    SUBMITTED: ["UNDER_REVIEW"],
+    ASSIGNED: ["IN_PROGRESS"],
+    IN_PROGRESS: ["VERIFICATION"],
   },
   DEPARTMENT_HEAD: {
-    UNDER_REVIEW: ['ASSIGNED', 'REJECTED'],
-    ASSIGNED: ['IN_PROGRESS'],
-    IN_PROGRESS: ['VERIFICATION', 'ESCALATED'],
-    VERIFICATION: ['RESOLVED'],
-    ESCALATED: ['IN_PROGRESS'],
+    UNDER_REVIEW: ["ASSIGNED", "REJECTED"],
+    IN_PROGRESS: ["ESCALATED"],
+    VERIFICATION: ["RESOLVED", "REOPENED"],
   },
   ADMIN: {
-    RESOLVED: ['CLOSED'],
-    ESCALATED: ['RESOLVED', 'IN_PROGRESS'],
-    VERIFICATION: ['RESOLVED'],
-    UNDER_REVIEW: ['ASSIGNED'],
+    RESOLVED: ["CLOSED", "REOPENED"],
+    ESCALATED: ["RESOLVED", "IN_PROGRESS"],
   },
 }
 
@@ -51,6 +48,8 @@ const ACTION_LABELS = {
   CLOSED: { label: 'Close Complaint', color: 'gray' },
   ESCALATED: { label: 'Escalate to Admin', color: 'orange' },
   REJECTED: { label: 'Reject Complaint', color: 'red' },
+  REOPENED: { label: 'Reopen Complaint', color: 'orange' },
+
 }
 
 const StatusTimeline = ({ currentStatus }) => {

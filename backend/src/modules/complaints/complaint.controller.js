@@ -72,7 +72,7 @@ const getAllComplaints = async (req, res) => {
     if (priority) where.priority = priority
     if (category) where.category = category
     if (departmentId) where.departmentId = departmentId
-    if (req.user.role.name === 'STAFF') where.departmentId = req.user.departmentId
+    if (req.user.role.name === 'STAFF' || req.user.role.name === 'DEPARTMENT_HEAD') where.departmentId = req.user.departmentId
 
     const skip = (parseInt(page) - 1) * parseInt(limit)
     const [complaints, total] = await Promise.all([
