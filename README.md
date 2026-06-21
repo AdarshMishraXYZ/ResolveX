@@ -102,8 +102,8 @@ npm run dev
 
 ---
 
-entials |
+ 
 
 ---
 
-*Built as a portfolio project demonstrating production-style backend engineering, system design, and AWS deployment.*
+
