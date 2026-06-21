@@ -79,7 +79,7 @@ const getAllComplaints = async (req, res) => {
       prisma.complaint.findMany({
         where,
         include: { department: true, createdBy: { select: { name: true, email: true } } },
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ dueAt: 'asc' }, { createdAt: 'desc' }],
         skip,
         take: parseInt(limit),
       }),
@@ -154,13 +154,20 @@ const updateStatus = async (req, res) => {
     }
 
     const complaint = await prisma.complaint.findUnique({ where: { id: req.params.id } })
-    if (!complaint) return res.status(404).json({ message: 'Complaint not found' })
+    if (complaint === null) return res.status(404).json({ message: 'Complaint not found' })
 
     const transition = await prisma.workflowTransition.findFirst({
       where: { fromStatus: complaint.status, toStatus: status, allowedRole: req.user.role.name },
     })
-    if (!transition) {
-      return res.status(403).json({ message: `Transition from ${complaint.status} to ${status} not allowed` })
+
+    const isSimpleResolution =
+      req.user.role.name === 'STAFF' &&
+      complaint.status === 'IN_PROGRESS' &&
+      status === 'RESOLVED' &&
+      (complaint.priority === 'LOW' || complaint.priority === 'MEDIUM')
+
+    if (transition === null && isSimpleResolution === false) {
+      return res.status(403).json({ message: 'Transition from ' + complaint.status + ' to ' + status + ' not allowed for your role' })
     }
 
     const result = await prisma.complaint.updateMany({
@@ -190,11 +197,11 @@ const updateStatus = async (req, res) => {
       userId: complaint.createdById,
       complaintId: complaint.id,
       type: 'STATUS_UPDATED',
-      message: `Your complaint "${complaint.title}" status changed to ${status.replace(/_/g, ' ')}.`,
+      message: 'Your complaint ' + complaint.title + ' status changed to ' + status.replace(/_/g, ' ') + '.',
     })
 
     if (global.io) {
-      global.io.to(`user_${complaint.createdById}`).emit('statusUpdate', {
+      global.io.to('user_' + complaint.createdById).emit('statusUpdate', {
         complaintId: complaint.id,
         status,
       })

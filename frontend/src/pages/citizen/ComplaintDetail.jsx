@@ -22,21 +22,35 @@ const WORKFLOW_STEPS = [
 ]
 
 
-const ALL_TRANSITIONS = {
-  STAFF: {
-    SUBMITTED: ["UNDER_REVIEW"],
-    ASSIGNED: ["IN_PROGRESS"],
-    IN_PROGRESS: ["VERIFICATION"],
-  },
-  DEPARTMENT_HEAD: {
-    UNDER_REVIEW: ["ASSIGNED", "REJECTED"],
-    IN_PROGRESS: ["ESCALATED"],
-    VERIFICATION: ["RESOLVED", "REOPENED"],
-  },
-  ADMIN: {
-    RESOLVED: ["CLOSED", "REOPENED"],
-    ESCALATED: ["RESOLVED", "IN_PROGRESS"],
-  },
+const getAvailableTransitions = (role, complaint) => {
+  const status = complaint.status
+  const priority = complaint.priority
+
+  if (role === 'STAFF') {
+    if (status === 'SUBMITTED') return ['UNDER_REVIEW']
+    if (status === 'ASSIGNED') return ['IN_PROGRESS']
+    if (status === 'IN_PROGRESS') {
+      return (priority === 'LOW' || priority === 'MEDIUM')
+        ? ['VERIFICATION', 'RESOLVED']
+        : ['VERIFICATION']
+    }
+    return []
+  }
+
+  if (role === 'DEPARTMENT_HEAD') {
+    if (status === 'UNDER_REVIEW') return ['ASSIGNED', 'REJECTED']
+    if (status === 'IN_PROGRESS') return ['ESCALATED']
+    if (status === 'VERIFICATION') return ['RESOLVED', 'REOPENED']
+    return []
+  }
+
+  if (role === 'ADMIN') {
+    if (status === 'RESOLVED') return ['CLOSED', 'REOPENED']
+    if (status === 'ESCALATED') return ['RESOLVED', 'IN_PROGRESS']
+    return []
+  }
+
+  return []
 }
 
 const ACTION_LABELS = {
@@ -244,7 +258,7 @@ const handleStatusUpdate = async (newStatus) => {
     <div className="text-center py-32 text-gray-400">Complaint not found</div>
   )
 
-  const availableTransitions = ALL_TRANSITIONS[user?.role]?.[complaint.status] || []
+  const availableTransitions = complaint && user ? getAvailableTransitions(user.role, complaint) : []
   const isOverdue = complaint.dueAt && new Date(complaint.dueAt) < new Date() &&
     !['RESOLVED', 'CLOSED'].includes(complaint.status)
 

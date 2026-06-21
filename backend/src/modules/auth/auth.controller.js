@@ -117,7 +117,15 @@ const getPendingStaff = async (req, res) => {
   try {
     const pending = await prisma.user.findMany({
       where: { status: 'PENDING' },
-      include: { role: true, department: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        status: true,
+        createdAt: true,
+        role: { select: { name: true } },
+        department: { select: { id: true, name: true } },
+      },
       orderBy: { createdAt: 'asc' },
     })
     res.json({ pending })
