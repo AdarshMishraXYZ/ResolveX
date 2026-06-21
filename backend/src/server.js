@@ -34,6 +34,9 @@ io.on('connection', (socket) => {
 
 global.io = io
 
+const { startSlaEscalationJob } = require("./jobs/slaEscalationJob")
+
 server.listen(PORT, () => {
   console.log(`ResolveX server running on port ${PORT}`)
+  startSlaEscalationJob()
 })
