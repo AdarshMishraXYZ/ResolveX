@@ -102,28 +102,7 @@ npm run dev
 
 ---
 
-## Interview talking points
-
-- Optimistic concurrency control preventing lost updates in concurrent status transitions
-- Department scoping at the query level, not the UI level
-- Routing engine scoring and explaining its own decisions
-- Staff approval gate and what it prevents
-- Workflow transition table separating role permissions from application code
-- Socket.IO rooms structured per user and per department
-- AWS deployment separating frontend, backend, database, and storage
-
----
-
-## AWS deployment
-
-| Service | Purpose |
-|---|---|
-| AWS Amplify | React frontend, GitHub CI/CD |
-| Elastic Beanstalk | Node.js backend |
-| Amazon RDS | Managed PostgreSQL |
-| Amazon S3 | Complaint attachments |
-| CloudWatch | Logs, monitoring, SLA breach alerts |
-| Secrets Manager | Database URL, JWT secret, credentials |
+entials |
 
 ---
 
