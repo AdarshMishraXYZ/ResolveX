@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getComplaintById, addComment, updateStatus } from '../../api/complaintApi'
+import { getComplaintById, addComment, updateStatus, uploadAttachment, getAttachments } from '../../api/complaintApi'
 import { StatusBadge, PriorityBadge } from '../../components/StatusBadge'
 import { useAuth } from '../../context/AuthContext'
 import { useSocket } from '../../context/SocketContext'
@@ -184,6 +184,54 @@ const StatusTimeline = ({ currentStatus }) => {
           })}
         </div>
       )}
+    </div>
+  )
+}
+
+const AttachmentSection = ({ complaintId }) => {
+  const [attachments, setAttachments] = useState([])
+  const [uploading, setUploading] = useState(false)
+
+  useEffect(() => {
+    getAttachments(complaintId).then(res => setAttachments(res.data.attachments)).catch(() => {})
+  }, [complaintId])
+
+  const handleUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const res = await uploadAttachment(complaintId, file)
+      setAttachments(prev => [...prev, res.data.attachment])
+      toast.success("File uploaded")
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Upload failed")
+    } finally {
+      setUploading(false)
+      e.target.value = ""
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+      <h2 className="font-semibold text-gray-800 mb-4">Attachments</h2>
+      {attachments.length === 0 ? (
+        <p className="text-gray-300 text-sm mb-4">No attachments yet</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          {attachments.map(a => (
+            <a key={a.id} href={a.fileUrl} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 transition truncate">
+              {a.fileType.startsWith("image") ? "🖼" : "📄"} {a.s3Key.split("-").slice(1).join("-")}
+            </a>
+          ))}
+        </div>
+      )}
+      <label className="cursor-pointer inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition">
+        {uploading ? "Uploading..." : "+ Attach file"}
+        <input type="file" className="hidden" onChange={handleUpload} disabled={uploading}
+          accept="image/jpeg,image/png,image/webp,application/pdf" />
+      </label>
     </div>
   )
 }
@@ -444,6 +492,9 @@ const handleStatusUpdate = async (newStatus) => {
           </button>
         </form>
       </div>
+
+      {/* Attachments */}
+      <AttachmentSection complaintId={id} />
 
       {/* Activity Log */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
