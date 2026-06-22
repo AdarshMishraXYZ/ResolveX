@@ -2,18 +2,19 @@ const prisma = require('../../config/db')
 const { validateComplaint } = require('../../utils/validators')
 const { routeComplaint } = require('../routing/routing.service')
 const { createNotification } = require('../../services/notificationService')
+const { sendComplaintCreatedEmail, sendStatusUpdateEmail, sendNewComplaintToStaffEmail } = require('../../services/emailService')
 
 const createComplaint = async (req, res) => {
   try {
     const { title, description, location } = req.body
 
-    if (!title || title.trim() === '') return res.status(400).json({ errors: ['Title is required'] })
-    if (!description || description.trim() === '') return res.status(400).json({ errors: ['Description is required'] })
+    if (!title || title.trim() === "") return res.status(400).json({ errors: ["Title is required"] })
+    if (!description || description.trim() === "") return res.status(400).json({ errors: ["Description is required"] })
 
     const routing = routeComplaint(description)
 
     const department = await prisma.department.findFirst({
-      where: { name: { contains: routing.department, mode: 'insensitive' } },
+      where: { name: { contains: routing.department, mode: "insensitive" } },
     })
 
     const complaint = await prisma.complaint.create({
@@ -24,7 +25,7 @@ const createComplaint = async (req, res) => {
         location,
         priority: routing.priority,
         createdById: req.user.id,
-        departmentId: department?.id || null,
+        departmentId: department ? department.id : null,
         dueAt: routing.dueAt,
       },
       include: { department: true, createdBy: { select: { name: true, email: true } } },
@@ -34,23 +35,48 @@ const createComplaint = async (req, res) => {
       data: {
         actorId: req.user.id,
         complaintId: complaint.id,
-        action: 'CREATED',
-        newValue: `SUBMITTED → routed to ${routing.department} (${routing.confidence}% confidence): ${routing.reasoning}`,
+        action: "CREATED",
+        newValue: "SUBMITTED routed to " + routing.department + " (" + routing.confidence + "% confidence): " + routing.reasoning,
       },
     })
 
     await createNotification({
       userId: req.user.id,
       complaintId: complaint.id,
-      type: 'COMPLAINT_CREATED',
-      message: `Your complaint "${title}" was submitted and routed to ${routing.department}.`,
+      type: "COMPLAINT_CREATED",
+      message: "Your complaint was submitted and routed to " + routing.department + ".",
     })
 
-    res.status(201).json({ message: 'Complaint created', complaint, routing })
+    sendComplaintCreatedEmail({
+      citizenEmail: req.user.email,
+      citizenName: req.user.name,
+      complaintTitle: title,
+      department: routing.department,
+      priority: routing.priority,
+    }).catch(() => {})
+
+    if (department) {
+      prisma.user.findMany({
+        where: { departmentId: department.id, status: "ACTIVE" },
+        select: { email: true },
+      }).then((staff) => {
+        const emails = staff.map(s => s.email)
+        sendNewComplaintToStaffEmail({
+          staffEmails: emails,
+          complaintTitle: title,
+          department: routing.department,
+          location,
+          priority: routing.priority,
+        }).catch(() => {})
+      }).catch(() => {})
+    }
+
+    res.status(201).json({ message: "Complaint created", complaint, routing })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 }
+
 const getMyComplaints = async (req, res) => {
   try {
     const complaints = await prisma.complaint.findMany({
@@ -153,7 +179,7 @@ const updateStatus = async (req, res) => {
       return res.status(400).json({ message: 'version is required to update status' })
     }
 
-    const complaint = await prisma.complaint.findUnique({ where: { id: req.params.id } })
+    const complaint = await prisma.complaint.findUnique({ where: { id: req.params.id }, include: { createdBy: { select: { name: true, email: true } } } })
     if (complaint === null) return res.status(404).json({ message: 'Complaint not found' })
 
     const transition = await prisma.workflowTransition.findFirst({
@@ -199,6 +225,8 @@ const updateStatus = async (req, res) => {
       type: 'STATUS_UPDATED',
       message: 'Your complaint ' + complaint.title + ' status changed to ' + status.replace(/_/g, ' ') + '.',
     })
+
+    sendStatusUpdateEmail({ citizenEmail: complaint.createdBy ? complaint.createdBy.email : null, citizenName: complaint.createdBy ? complaint.createdBy.name : null, complaintTitle: complaint.title, newStatus: status }).catch(() => {})
 
     if (global.io) {
       global.io.to('user_' + complaint.createdById).emit('statusUpdate', {
