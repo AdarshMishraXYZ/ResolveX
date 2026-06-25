@@ -27,10 +27,6 @@ router.post("/:id/attachments", requireAuth, upload.single("file"), async (req, 
     const complaint = await prisma.complaint.findUnique({ where: { id: req.params.id } })
     if (!complaint) return res.status(404).json({ message: "Complaint not found" })
 
-    if (!process.env.AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID === "") {
-      return res.status(503).json({ message: "File upload not configured yet. Add AWS credentials to enable this feature." })
-    }
-
     const { key, fileUrl } = await uploadToS3(req.file)
 
     const attachment = await prisma.attachment.create({

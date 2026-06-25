@@ -13,7 +13,10 @@ const errorMiddleware = require('./middleware/errorMiddleware')
 
 const app = express()
 
+const path = require('path')
+
 app.use(helmet())
+app.use('/uploads', require('express').static(require('path').join(__dirname, '../uploads')))
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
