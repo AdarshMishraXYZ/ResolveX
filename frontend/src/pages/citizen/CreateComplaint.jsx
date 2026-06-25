@@ -1,19 +1,40 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createComplaint } from '../../api/complaintApi'
+import { createComplaint, uploadAttachment } from '../../api/complaintApi'
 import toast from 'react-hot-toast'
+import { Paperclip, X } from 'lucide-react'
 
 const CreateComplaint = () => {
   const [form, setForm] = useState({ title: '', description: '', location: '' })
+  const [file, setFile] = useState(null)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+
+  const handleFileChange = (e) => {
+    const selected = e.target.files[0]
+    if (selected && selected.size > 5 * 1024 * 1024) {
+      toast.error('File must be under 5MB')
+      return
+    }
+    setFile(selected || null)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     try {
-      await createComplaint(form)
-      toast.success('Complaint submitted — we are routing it to the right department')
+      const res = await createComplaint(form)
+      const complaintId = res.data.complaint.id
+
+      if (file) {
+        try {
+          await uploadAttachment(complaintId, file)
+        } catch {
+          toast.error('Complaint submitted but file upload failed')
+        }
+      }
+
+      toast.success('Complaint submitted — routing it to the right department')
       navigate('/dashboard')
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to submit')
@@ -52,7 +73,7 @@ const CreateComplaint = () => {
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               rows={5}
-              placeholder="Describe what's happening in your own words — e.g. 'the chair in the library is broken and there aren't enough seats'"
+              placeholder="Describe what's happening in your own words"
               required
             />
             <p className="text-xs text-gray-400 mt-1.5">
@@ -69,6 +90,30 @@ const CreateComplaint = () => {
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="e.g. Block A, Room 204"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Attach a photo (optional)</label>
+            {file ? (
+              <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+                <Paperclip size={16} className="text-blue-600 flex-shrink-0" />
+                <span className="text-sm text-blue-700 flex-1 truncate">{file.name}</span>
+                <button type="button" onClick={() => setFile(null)} className="text-gray-400 hover:text-red-500 transition">
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <label className="cursor-pointer flex items-center gap-2 border border-dashed border-gray-300 rounded-lg px-4 py-4 hover:border-blue-400 hover:bg-blue-50 transition">
+                <Paperclip size={16} className="text-gray-400" />
+                <span className="text-sm text-gray-500">Click to attach an image or PDF (max 5MB)</span>
+                <input
+                  type="file"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                />
+              </label>
+            )}
           </div>
 
           <div className="flex gap-3 pt-2">
