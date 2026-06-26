@@ -44,7 +44,7 @@ const createComplaint = async (req, res) => {
       userId: req.user.id,
       complaintId: complaint.id,
       type: "COMPLAINT_CREATED",
-      message: "Your complaint was submitted and routed to " + routing.department + ".",
+      message: "Your complaint " + title + " was submitted and routed to " + routing.department + " (" + routing.confidence + "% confidence). Priority: " + routing.priority + ".",
     })
 
     sendComplaintCreatedEmail({
@@ -223,7 +223,7 @@ const updateStatus = async (req, res) => {
       userId: complaint.createdById,
       complaintId: complaint.id,
       type: 'STATUS_UPDATED',
-      message: 'Your complaint ' + complaint.title + ' status changed to ' + status.replace(/_/g, ' ') + '.',
+      message: 'Update on "' + complaint.title + '": ' + status.replace(/_/g, ' ') + (status === 'RESOLVED' ? ' - Your issue has been resolved!' : status === 'ESCALATED' ? ' - Escalated to admin.' : status === 'REJECTED' ? ' - Complaint rejected.' : ' - Log in for details.'),
     })
 
     sendStatusUpdateEmail({ citizenEmail: complaint.createdBy ? complaint.createdBy.email : null, citizenName: complaint.createdBy ? complaint.createdBy.name : null, complaintTitle: complaint.title, newStatus: status }).catch(() => {})
