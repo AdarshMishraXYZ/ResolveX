@@ -12,57 +12,45 @@ import {
 } from 'lucide-react'
 
 const WORKFLOW_STEPS = [
-  { status: 'SUBMITTED', label: 'Submitted', desc: 'Complaint received by system', icon: CheckCircle, color: 'blue' },
-  { status: 'UNDER_REVIEW', label: 'Under Review', desc: 'Department reviewing your complaint', icon: Clock, color: 'blue' },
-  { status: 'ASSIGNED', label: 'Assigned', desc: 'Assigned to a staff member', icon: User, color: 'blue' },
-  { status: 'IN_PROGRESS', label: 'In Progress', desc: 'Staff is actively working on it', icon: ArrowUpCircle, color: 'blue' },
-  { status: 'VERIFICATION', label: 'Verification', desc: 'Solution being verified', icon: Shield, color: 'blue' },
-  { status: 'RESOLVED', label: 'Resolved', desc: 'Issue has been resolved', icon: ThumbsUp, color: 'green' },
-  { status: 'CLOSED', label: 'Closed', desc: 'Complaint closed successfully', icon: CheckCircle, color: 'gray' },
+  { status: "SUBMITTED", label: "Open", desc: "Complaint received and waiting for staff", icon: CheckCircle, color: "blue" },
+  { status: "ASSIGNED", label: "In Progress", desc: "Staff is working on your complaint", icon: ArrowUpCircle, color: "blue" },
+  { status: "RESOLVED", label: "Resolved", desc: "Issue has been resolved", icon: ThumbsUp, color: "green" },
+  { status: "CLOSED", label: "Closed", desc: "Complaint closed successfully", icon: CheckCircle, color: "gray" },
 ]
-
 
 const getAvailableTransitions = (role, complaint) => {
   const status = complaint.status
-  const priority = complaint.priority
-
-  if (role === 'STAFF') {
-    if (status === 'SUBMITTED') return ['UNDER_REVIEW']
-    if (status === 'ASSIGNED') return ['IN_PROGRESS']
-    if (status === 'IN_PROGRESS') {
-      return (priority === 'LOW' || priority === 'MEDIUM')
-        ? ['VERIFICATION', 'RESOLVED']
-        : ['VERIFICATION']
-    }
+  if (role === "STAFF") {
+    if (status === "SUBMITTED") return ["ASSIGNED"]
+    if (status === "ASSIGNED") return ["RESOLVED"]
     return []
   }
-
-  if (role === 'DEPARTMENT_HEAD') {
-    if (status === 'UNDER_REVIEW') return ['ASSIGNED', 'REJECTED']
-    if (status === 'IN_PROGRESS') return ['ESCALATED']
-    if (status === 'VERIFICATION') return ['RESOLVED', 'REOPENED']
+  if (role === "DEPARTMENT_HEAD") {
+    if (status === "SUBMITTED") return ["ASSIGNED"]
+    if (status === "ASSIGNED") return ["RESOLVED", "ESCALATED"]
     return []
   }
-
-  if (role === 'ADMIN') {
-    if (status === 'RESOLVED') return ['CLOSED', 'REOPENED']
-    if (status === 'ESCALATED') return ['RESOLVED', 'IN_PROGRESS']
+  if (role === "ADMIN") {
+    if (status === "RESOLVED") return ["CLOSED"]
+    if (status === "ESCALATED") return ["ASSIGNED", "RESOLVED"]
     return []
   }
+  if (role === "CITIZEN") {
+    if (status === "RESOLVED") return ["SUBMITTED"]
+    return []
+  }
+  return []
+}
 
   return []
 }
 
 const ACTION_LABELS = {
-  UNDER_REVIEW: { label: 'Start Review', color: 'blue' },
-  ASSIGNED: { label: 'Assign to Staff', color: 'blue' },
-  IN_PROGRESS: { label: 'Mark In Progress', color: 'blue' },
-  VERIFICATION: { label: 'Send for Verification', color: 'blue' },
-  RESOLVED: { label: 'Mark Resolved', color: 'green' },
-  CLOSED: { label: 'Close Complaint', color: 'gray' },
-  ESCALATED: { label: 'Escalate to Admin', color: 'orange' },
-  REJECTED: { label: 'Reject Complaint', color: 'red' },
-  REOPENED: { label: 'Reopen Complaint', color: 'orange' },
+  ASSIGNED: { label: "Take this complaint", color: "blue" },
+  RESOLVED: { label: "Mark as Resolved", color: "green" },
+  CLOSED: { label: "Close Complaint", color: "gray" },
+  ESCALATED: { label: "Escalate to Admin", color: "orange" },
+  SUBMITTED: { label: "Reopen Complaint", color: "orange" },
 
 }
 
