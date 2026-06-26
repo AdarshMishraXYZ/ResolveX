@@ -42,9 +42,6 @@ const getAvailableTransitions = (role, complaint) => {
   return []
 }
 
-  return []
-}
-
 const ACTION_LABELS = {
   ASSIGNED: { label: "Take this complaint", color: "blue" },
   RESOLVED: { label: "Mark as Resolved", color: "green" },

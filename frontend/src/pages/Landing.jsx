@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 
-const TIMELINE_STEPS = ['Submitted', 'Under review', 'Assigned', 'In progress', 'Resolved']
+const TIMELINE_STEPS = ['Open', 'In Progress', 'Resolved', 'Closed']
 
 const LiveTicket = () => {
   const [activeStep, setActiveStep] = useState(0)
