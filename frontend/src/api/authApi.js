@@ -15,5 +15,7 @@ export const getMe = () => api.get('/auth/me')
 export const getDepartments = () => api.get('/departments')
 export const getPendingStaff = () => api.get('/auth/pending-staff')
 export const approveStaff = (id) => api.patch('/auth/approve-staff/' + id)
+export const getAllUsers = () => api.get('/auth/users')
+export const impersonateUser = (id) => api.post('/auth/impersonate/' + id)
 
 export default api

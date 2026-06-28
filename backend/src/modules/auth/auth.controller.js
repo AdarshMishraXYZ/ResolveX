@@ -168,4 +168,55 @@ const approveStaff = async (req, res) => {
   }
 }
 
-module.exports = { register, login, getMe, getPendingStaff, approveStaff }
+const impersonateUser = async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.params.id },
+      include: { role: true, department: true },
+    })
+    if (!user) return res.status(404).json({ message: "User not found" })
+    if (user.status !== "ACTIVE") return res.status(400).json({ message: "Cannot impersonate inactive user" })
+
+    const token = require("jsonwebtoken").sign(
+      { userId: user.id, impersonatedBy: req.user.id },
+      process.env.JWT_SECRET,
+      { expiresIn: "2h" }
+    )
+
+    res.json({
+      message: "Impersonation token generated",
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role.name,
+        department: user.department ? user.department.name : null,
+      }
+    })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      where: { status: "ACTIVE" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        status: true,
+        role: { select: { name: true } },
+        department: { select: { name: true } },
+      },
+      orderBy: [{ role: { name: "asc" } }, { name: "asc" }],
+    })
+    res.json({ users })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+module.exports = { register, login, getMe, getPendingStaff, approveStaff, impersonateUser, getAllUsers }
