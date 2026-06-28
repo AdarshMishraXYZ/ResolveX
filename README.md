@@ -66,7 +66,7 @@ Ten trade skills: Electrician, Plumber, Carpenter, Painter, AC Technician, Mason
 
 ## Complaint workflow
 
-SUBMITTED (Staff) -> UNDER_REVIEW (Dept Head) -> ASSIGNED (Staff) -> IN_PROGRESS (Staff) -> VERIFICATION (Dept Head) -> RESOLVED (Admin) -> CLOSED
+SUBMITTED -> UNDER_REVIEW  -> ASSIGNED  -> IN_PROGRESS (Staff) - RESOLVED (Admin) -> CLOSED
 
 Exceptions: REJECTED, ESCALATED, REOPENED — each with their own role gates.
 
