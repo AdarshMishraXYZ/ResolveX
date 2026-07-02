@@ -29,14 +29,19 @@ const DemoMode = ({ isImpersonating, onReturnToAdmin }) => {
   const handleSwitch = async (targetUser) => {
     setSwitching(targetUser.id)
     try {
+      const adminToken = localStorage.getItem("token")
+      if (!localStorage.getItem("originalAdminToken")) {
+        localStorage.setItem("originalAdminToken", adminToken)
+      }
       const res = await impersonateUser(targetUser.id)
       login(res.data.token, res.data.user)
+      localStorage.setItem("isImpersonating", "true")
       toast.success("Viewing as " + res.data.user.name)
       setOpen(false)
       const role = res.data.user.role
-      if (role === "ADMIN") navigate("/admin")
-      else if (role === "STAFF" || role === "DEPARTMENT_HEAD") navigate("/staff")
-      else navigate("/dashboard")
+      if (role === "ADMIN") window.location.href = "/admin"
+      else if (role === "STAFF" || role === "DEPARTMENT_HEAD") window.location.href = "/staff"
+      else window.location.href = "/dashboard"
     } catch (err) {
       toast.error("Switch failed")
     } finally {
@@ -44,14 +49,27 @@ const DemoMode = ({ isImpersonating, onReturnToAdmin }) => {
     }
   }
 
-  if (user?.role !== "ADMIN" && !isImpersonating) return null
+  const storedImpersonating = localStorage.getItem("isImpersonating") === "true"
+  const effectivelyImpersonating = isImpersonating || storedImpersonating
+
+  const handleReturnToAdmin = () => {
+    const originalToken = localStorage.getItem("originalAdminToken")
+    if (originalToken) {
+      localStorage.setItem("token", originalToken)
+      localStorage.removeItem("originalAdminToken")
+      localStorage.removeItem("isImpersonating")
+      window.location.href = "/admin"
+    }
+  }
+
+  if (user?.role !== "ADMIN" && !effectivelyImpersonating) return null
 
   return (
     <>
-      {isImpersonating && (
+      {effectivelyImpersonating && (
         <div className="fixed top-0 left-0 right-0 z-50 bg-amber-500 text-white text-center py-2 text-sm font-medium flex items-center justify-center gap-4">
           <span>Demo Mode — Viewing as {user?.name} ({user?.role})</span>
-          <button onClick={onReturnToAdmin} className="bg-white text-amber-600 px-3 py-0.5 rounded text-xs font-bold">Return to Admin</button>
+          <button onClick={handleReturnToAdmin} className="bg-white text-amber-600 px-3 py-0.5 rounded text-xs font-bold">Return to Admin</button>
         </div>
       )}
 
