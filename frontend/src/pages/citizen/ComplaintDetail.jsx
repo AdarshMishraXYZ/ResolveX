@@ -28,10 +28,10 @@ const getAvailableTransitions = (role, complaint) => {
   if (role === "DEPARTMENT_HEAD") {
     if (status === "SUBMITTED") return ["ASSIGNED"]
     if (status === "ASSIGNED") return ["RESOLVED", "ESCALATED"]
+    if (status === "RESOLVED") return ["CLOSED"]
     return []
   }
   if (role === "ADMIN") {
-    if (status === "RESOLVED") return ["CLOSED"]
     if (status === "ESCALATED") return ["ASSIGNED", "RESOLVED"]
     return []
   }
@@ -41,7 +41,6 @@ const getAvailableTransitions = (role, complaint) => {
   }
   return []
 }
-
 const ACTION_LABELS = {
   ASSIGNED: { label: "Take this complaint", color: "blue" },
   RESOLVED: { label: "Mark as Resolved", color: "green" },
