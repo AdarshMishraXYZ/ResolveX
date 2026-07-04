@@ -1,7 +1,4 @@
-cd /d/ResolveX
-node -e "
-const fs = require('fs');
-const content = \`# ResolveX — Smart Complaint Routing & Public Service Workflow System
+# ResolveX — Smart Complaint Routing & Public Service Workflow System
 
 A production-grade full-stack workflow platform built for colleges and institutions. Citizens describe problems in plain text — ResolveX routes them to the right department automatically, tracks every action, enforces deadlines, and escalates when things stall.
 
@@ -11,12 +8,12 @@ A production-grade full-stack workflow platform built for colleges and instituti
 
 Most complaint systems are CRUD apps with a status dropdown. ResolveX is a workflow engine with real engineering decisions behind it:
 
-- The routing engine **scores and explains** its own decisions — not just keyword matching, but weighted scoring with a confidence percentage and a stated reason
+- The routing engine **scores and explains** its own decisions — weighted scoring with a confidence percentage and a stated reason, not just keyword matching
 - Status transitions are **validated at the database level** against a WorkflowTransition table — no frontend bypass possible
 - Concurrent status updates use **optimistic locking** — two staff members clicking simultaneously will have exactly one succeed and one receive a 409 Conflict, proven with a real concurrent curl race
 - Department scoping is enforced **at the query level**, not just the UI — an IT staff member cannot fetch a Maintenance complaint by guessing its UUID
 - Staff accounts start as **PENDING** and cannot log in until an admin approves them — prevents random signups from accessing the complaint queue
-- The SLA escalation job is **idempotent** — it can run every 15 minutes without ever double-escalating the same complaint
+- The SLA escalation job is **idempotent** — runs every 15 minutes without ever double-escalating the same complaint
 - A **Demo Mode** lets anyone switch between all four roles instantly without logging out — built for presentations and evaluations
 
 ---
@@ -47,13 +44,13 @@ Most complaint systems are CRUD apps with a status dropdown. ResolveX is a workf
 
 ---
 
-## Workflow — simplified for real use
+## Workflow
 
-\\\`\\\`\\\`
+```
 SUBMITTED → ASSIGNED → RESOLVED → CLOSED
                ↓
            ESCALATED → (Admin resolves or reassigns)
-\\\`\\\`\\\`
+```
 
 - **Staff** picks up (SUBMITTED → ASSIGNED) or self-assigns
 - **Staff** marks done (ASSIGNED → RESOLVED)
@@ -66,22 +63,22 @@ SUBMITTED → ASSIGNED → RESOLVED → CLOSED
 ## Engineering decisions worth talking about
 
 ### Optimistic concurrency control
-Every complaint has a \\\`version\\\` integer. Status updates use \\\`WHERE id = ? AND version = ?\\\` — if the version doesn't match, the update affects zero rows and returns 409 Conflict. Verified by firing two concurrent curl requests at the same endpoint and confirming exactly one succeeded.
+Every complaint has a `version` integer. Status updates use `WHERE id = ? AND version = ?` — if the version does not match, the update affects zero rows and returns 409 Conflict. Verified by firing two concurrent curl requests at the same endpoint and confirming exactly one succeeded.
 
 ### Explainable routing engine
-The routing engine doesn't stop at the first keyword match. It scores every department by total keyword character overlap, picks the highest score, and returns \\\`{ department, confidence, reasoning }\\\`. The reasoning field (e.g. "Routed based on keywords: toilet, smell, clean") is stored in the audit log on every complaint — every routing decision is permanently inspectable.
+The routing engine scores every department by total keyword character overlap, picks the highest score, and returns a result with `department`, `confidence`, and `reasoning` fields. The reasoning (e.g. "Routed based on keywords: toilet, smell, clean") is stored in the audit log on every complaint — every routing decision is permanently inspectable.
 
 ### Department-scoped authorization
-\\\`getAllComplaints\\\` and \\\`getComplaintById\\\` both apply department filters at the Prisma query level, not the UI. \\\`STAFF\\\` and \\\`DEPARTMENT_HEAD\\\` are scoped identically — a head cannot see other departments' queues. Verified by requesting a cross-department complaint with a staff token and confirming a 403 response.
+`getAllComplaints` and `getComplaintById` apply department filters at the Prisma query level. Both `STAFF` and `DEPARTMENT_HEAD` are scoped identically — a head cannot see other departments' queues. Verified by requesting a cross-department complaint with a staff token and confirming a 403 response.
 
 ### Staff approval gate
-Staff registration creates a \\\`PENDING\\\` account that is blocked at the login endpoint — the JWT is never issued until an admin approves. The admin sees pending accounts in a dedicated panel with one-click approval.
+Staff registration creates a `PENDING` account that is blocked at the login endpoint — the JWT is never issued until an admin approves. The admin sees pending accounts in a dedicated panel with one-click approval.
 
 ### SLA escalation with idempotency
-A node-cron job runs every 15 minutes. It finds complaints where \\\`dueAt < now\\\` and status is not terminal. Before escalating, it checks for an existing \\\`SLA_ESCALATED\\\` audit log entry — if found, skips. This guarantees at-most-once escalation per complaint regardless of how many times the job fires.
+A node-cron job runs every 15 minutes. It finds complaints where `dueAt < now` and status is not terminal. Before escalating, it checks for an existing `SLA_ESCALATED` audit log entry — if found, skips. This guarantees at-most-once escalation per complaint regardless of how many times the job fires.
 
 ### Demo Mode (admin impersonation)
-Admin can switch into any user's perspective without logging out. The original admin token is stored in localStorage and restored on "Return to Admin". An amber banner stays visible showing the current impersonated role. Built specifically to make live demonstrations smooth.
+Admin can switch into any user's perspective without logging out. The original admin token is stored in localStorage and restored on "Return to Admin". An amber banner stays visible showing the current impersonated role.
 
 ---
 
@@ -89,9 +86,7 @@ Admin can switch into any user's perspective without logging out. The original a
 
 Six departments: IT, Maintenance, Hostel, Administration, Electrical, Sanitation.
 
-Ten trade skills seeded: Electrician, Plumber, Carpenter, Painter, AC Technician, Mason, Cleaner, IT Technician, Gardener, Locksmith.
-
-Staff can be tagged with skills so department heads can match complaint types to the right person.
+Ten trade skills: Electrician, Plumber, Carpenter, Painter, AC Technician, Mason, Cleaner, IT Technician, Gardener, Locksmith.
 
 ---
 
@@ -130,7 +125,7 @@ Staff can be tagged with skills so department heads can match complaint types to
 
 ## Local setup
 
-\\\`\\\`\\\`bash
+```bash
 git clone https://github.com/AdarshMishraXYZ/ResolveX.git
 
 # Backend
@@ -140,31 +135,28 @@ cp .env.example .env        # fill DATABASE_URL, JWT_SECRET, RESEND_API_KEY
 npx prisma migrate dev
 npx prisma generate
 npm run seed
-npm run dev                  # runs on port 5000
+npm run dev                  # port 5000
 
 # Frontend (new terminal)
 cd ResolveX/frontend
 npm install
-npm run dev                  # runs on port 5173
-\\\`\\\`\\\`
-
----
-
-## Interview talking points
-
-- How optimistic locking prevents lost updates — and how you proved it with a real concurrent test
-- Why department scoping belongs at the query level, not the UI level — and the exact 403 test that proved the fix
-- How the routing engine scores and explains its own decisions rather than stopping at the first keyword
-- Why the staff approval gate exists and what attack it prevents
-- How SLA escalation achieves at-most-once semantics without a distributed lock
-- How Demo Mode works — admin impersonation using localStorage token swapping
-- How Vite was chosen over CRA — faster builds, modern tooling, industry standard in 2025-26
-- Why PostgreSQL over MongoDB — relational data with joins, enforced foreign keys, transactions across multiple tables in a single status update
-- How email deliverability works — Resend sandbox vs custom domain with SPF/DKIM/DMARC
+npm run dev                  # port 5173
+```
 
 ---
 
 
-fs.writeFileSync('README.md', content);
-console.log('SUCCESS - lines: ' + content.split('\\n').length);
-"
+
+## AWS deployment (planned)
+
+| Service | Purpose |
+|---|---|
+| AWS Amplify | React frontend, GitHub CI/CD |
+| Elastic Beanstalk | Node.js backend |
+| Amazon RDS | Managed PostgreSQL |
+| Amazon S3 | Complaint attachments |
+| CloudWatch | Logs, error monitoring, SLA breach alerts |
+| Secrets Manager | DATABASE_URL, JWT_SECRET, RESEND_API_KEY |
+
+---
+
