@@ -2,7 +2,7 @@ const prisma = require('../../config/db')
 const { validateComplaint } = require('../../utils/validators')
 const { routeComplaint } = require('../routing/routing.service')
 const { createNotification } = require('../../services/notificationService')
-const { sendComplaintCreatedEmail, sendStatusUpdateEmail, sendNewComplaintToStaffEmail } = require('../../services/emailService')
+const { sendComplaintCreatedEmail, sendStatusUpdateEmail, sendNewComplaintToStaffEmail, sendEscalationToAdminEmail, sendComplaintClosedEmail } = require('../../services/emailService')
 
 const createComplaint = async (req, res) => {
   try {
@@ -227,6 +227,16 @@ const updateStatus = async (req, res) => {
     })
 
     sendStatusUpdateEmail({ citizenEmail: complaint.createdBy ? complaint.createdBy.email : null, citizenName: complaint.createdBy ? complaint.createdBy.name : null, complaintTitle: complaint.title, newStatus: status }).catch(() => {})
+
+    if (status === 'ESCALATED') {
+      prisma.user.findMany({ where: { status: 'ACTIVE', role: { name: 'ADMIN' } }, select: { email: true } }).then(admins => {
+        sendEscalationToAdminEmail({ adminEmails: admins.map(a => a.email), complaintTitle: complaint.title, department: complaint.department ? complaint.department.name : 'Unknown', priority: complaint.priority }).catch(() => {})
+      }).catch(() => {})
+    }
+
+    if (status === 'CLOSED') {
+      sendComplaintClosedEmail({ citizenEmail: complaint.createdBy ? complaint.createdBy.email : null, citizenName: complaint.createdBy ? complaint.createdBy.name : null, complaintTitle: complaint.title }).catch(() => {})
+    }
 
     if (global.io) {
       global.io.to('user_' + complaint.createdById).emit('statusUpdate', {

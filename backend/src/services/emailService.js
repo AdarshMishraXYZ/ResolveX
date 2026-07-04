@@ -45,4 +45,23 @@ const sendNewComplaintToStaffEmail = async ({ staffEmails, complaintTitle, depar
   }
 }
 
-module.exports = { sendEmail, sendComplaintCreatedEmail, sendStatusUpdateEmail, sendNewComplaintToStaffEmail }
+const sendEscalationToAdminEmail = async ({ adminEmails, complaintTitle, department, priority }) => {
+  for (const email of adminEmails) {
+    await sendEmail({
+      to: email,
+      subject: "ResolveX: Complaint Escalated - Urgent Action Required",
+      html: "<div style=font-family:sans-serif;max-width:600px;margin:auto;padding:24px><h2 style=color:#dc2626>Complaint Escalated</h2><p>A complaint requires your urgent attention.</p><ul><li><strong>Title:</strong> " + complaintTitle + "</li><li><strong>Department:</strong> " + department + "</li><li><strong>Priority:</strong> " + priority + "</li></ul><p>Please log in to ResolveX to take action.</p><br><p style=color:#888>ResolveX Team</p></div>",
+    })
+  }
+}
+
+const sendComplaintClosedEmail = async ({ citizenEmail, citizenName, complaintTitle }) => {
+  if (citizenEmail === null || citizenEmail === undefined) return
+  await sendEmail({
+    to: citizenEmail,
+    subject: "ResolveX: Your complaint has been closed",
+    html: "<div style=font-family:sans-serif;max-width:600px;margin:auto;padding:24px><h2 style=color:#1A1A18>Complaint Closed</h2><p>Hi " + citizenName + ",</p><p>Your complaint <strong>" + complaintTitle + "</strong> has been successfully closed.</p><p>Thank you for using ResolveX. If the issue persists, you can reopen the complaint by logging in.</p><br><p style=color:#888>ResolveX Team</p></div>",
+  })
+}
+
+module.exports = { sendEmail, sendComplaintCreatedEmail, sendStatusUpdateEmail, sendNewComplaintToStaffEmail, sendEscalationToAdminEmail, sendComplaintClosedEmail }
