@@ -12,7 +12,7 @@ const uploadToS3 = async (file) => {
   const filename = uuidv4() + "-" + file.originalname.replace(/\s/g, "-")
   const filepath = path.join(UPLOAD_DIR, filename)
   fs.writeFileSync(filepath, file.buffer)
-  const fileUrl = "/uploads/" + filename
+  const fileUrl = (process.env.BACKEND_URL || "http://localhost:5000") + "/uploads/" + filename
   return { key: filename, fileUrl }
 }
 
