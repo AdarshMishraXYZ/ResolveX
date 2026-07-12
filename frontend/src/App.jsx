@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
@@ -16,35 +15,15 @@ import ComplaintDetail from './pages/citizen/ComplaintDetail'
 import StaffDashboard from './pages/staff/StaffDashboard'
 import AdminDashboard from './pages/admin/AdminDashboard'
 
-const Layout = ({ children, isImpersonating, onReturnToAdmin }) => (
+const Layout = ({ children }) => (
   <div className="min-h-screen bg-gray-50">
-    {isImpersonating && <div className="h-9" />}
     <Navbar />
     <main>{children}</main>
-    <DemoMode isImpersonating={isImpersonating} onReturnToAdmin={onReturnToAdmin} />
+    <DemoMode />
   </div>
 )
 
 function App() {
-  const [isImpersonating, setIsImpersonating] = useState(false)
-  const [originalAdminData, setOriginalAdminData] = useState(null)
-
-  const handleImpersonate = (token, user) => {
-    if (!originalAdminData) {
-      setOriginalAdminData({ token: localStorage.getItem("token"), user: JSON.parse(localStorage.getItem("user") || "{}") })
-    }
-    setIsImpersonating(true)
-  }
-
-  const handleReturnToAdmin = () => {
-    if (originalAdminData) {
-      localStorage.setItem("token", originalAdminData.token)
-      setIsImpersonating(false)
-      setOriginalAdminData(null)
-      window.location.href = "/admin"
-    }
-  }
-
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -57,31 +36,31 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={
               <ProtectedRoute roles={['CITIZEN', 'ADMIN']}>
-                <Layout isImpersonating={isImpersonating} onReturnToAdmin={handleReturnToAdmin}><Dashboard /></Layout>
+                <Layout><Dashboard /></Layout>
               </ProtectedRoute>
             } />
 
             <Route path="/complaints/new" element={
               <ProtectedRoute>
-                <Layout isImpersonating={isImpersonating} onReturnToAdmin={handleReturnToAdmin}><CreateComplaint /></Layout>
+                <Layout><CreateComplaint /></Layout>
               </ProtectedRoute>
             } />
 
             <Route path="/complaints/:id" element={
               <ProtectedRoute>
-                <Layout isImpersonating={isImpersonating} onReturnToAdmin={handleReturnToAdmin}><ComplaintDetail /></Layout>
+                <Layout><ComplaintDetail /></Layout>
               </ProtectedRoute>
             } />
 
             <Route path="/staff" element={
               <ProtectedRoute roles={['STAFF', 'DEPARTMENT_HEAD', 'ADMIN']}>
-                <Layout isImpersonating={isImpersonating} onReturnToAdmin={handleReturnToAdmin}><StaffDashboard /></Layout>
+                <Layout><StaffDashboard /></Layout>
               </ProtectedRoute>
             } />
 
             <Route path="/admin" element={
               <ProtectedRoute roles={['ADMIN']}>
-                <Layout isImpersonating={isImpersonating} onReturnToAdmin={handleReturnToAdmin}><AdminDashboard /></Layout>
+                <Layout><AdminDashboard /></Layout>
               </ProtectedRoute>
             } />
 

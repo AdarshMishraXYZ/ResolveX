@@ -48,9 +48,7 @@ const DemoMode = ({ isImpersonating, onReturnToAdmin }) => {
       setSwitching(null)
     }
   }
-
-  const storedImpersonating = localStorage.getItem("isImpersonating") === "true"
-  const effectivelyImpersonating = isImpersonating || storedImpersonating
+  const [effectivelyImpersonating] = useState(isImpersonating || localStorage.getItem("isImpersonating") === "true")
 
   const handleReturnToAdmin = () => {
     const originalToken = localStorage.getItem("originalAdminToken")

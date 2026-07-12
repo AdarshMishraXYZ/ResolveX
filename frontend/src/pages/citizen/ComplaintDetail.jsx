@@ -204,7 +204,7 @@ const AttachmentSection = ({ complaintId }) => {
       ) : (
         <div className="grid grid-cols-2 gap-3 mb-4">
           {attachments.map(a => (
-            <a key={a.id} href={a.fileUrl} target="_blank" rel="noopener noreferrer"
+            <a key={a.id} href={a.fileUrl.startsWith("http") ? a.fileUrl : "http://localhost:5000" + a.fileUrl} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 transition truncate">
               {a.fileType.startsWith("image") ? "🖼" : "📄"} {a.s3Key.split("-").slice(1).join("-")}
             </a>
