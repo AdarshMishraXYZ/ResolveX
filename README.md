@@ -2,7 +2,13 @@
 
 A production-grade full-stack workflow platform built for colleges and institutions. Citizens describe problems in plain text — ResolveX routes them to the right department automatically, tracks every action, enforces deadlines, and escalates when things stall.
 
----
+# Demo video
+
+https://github.com/user-attachments/assets/5efe72b2-1162-4835-9192-6a92c008a460
+
+
+
+
 
 ## What makes this different from a basic complaint form
 
