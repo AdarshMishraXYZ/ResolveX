@@ -12,7 +12,7 @@ https://github.com/user-attachments/assets/5efe72b2-1162-4835-9192-6a92c008a460
 
 
 
-## What makes this different from a basic complaint form
+## What makes this different from a basic complaint form   ...
 
 Most complaint systems are CRUD apps with a status dropdown. ResolveX is a workflow engine with real engineering decisions behind it:
 
